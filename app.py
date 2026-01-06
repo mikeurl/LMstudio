@@ -83,6 +83,23 @@ def detect_primary_key(df: pd.DataFrame) -> str:
     return df.columns[0]
 
 
+def sanitize_for_csv(text: str) -> str:
+    """
+    Sanitize text to ensure it fits in a single CSV cell
+    Replaces newlines and carriage returns with spaces
+    """
+    if not isinstance(text, str):
+        return str(text)
+
+    # Replace newlines, carriage returns, and tabs with spaces
+    cleaned = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+
+    # Replace multiple spaces with single space
+    cleaned = ' '.join(cleaned.split())
+
+    return cleaned.strip()
+
+
 def process_csv(
     file,
     prompt_template: str,
@@ -139,7 +156,10 @@ def process_csv(
 
             # Get summary from LM Studio
             summary = client.chat_completion(prompt, model=model_name, temperature=temperature)
-            summaries.append(summary)
+
+            # Sanitize the summary to ensure it's a single line (no page breaks)
+            sanitized_summary = sanitize_for_csv(summary)
+            summaries.append(sanitized_summary)
 
             progress((idx + 1) / len(df), desc=f"Processed {idx + 1}/{len(df)} rows")
 
