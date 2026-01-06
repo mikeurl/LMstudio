@@ -202,87 +202,163 @@ def process_csv(
 
 
 def create_interface():
-    """Create and configure the Gradio interface"""
+    """Create and configure the Gradio interface with modern glass-morphism design"""
 
-    # Initialize client to check connection
-    client = LMStudioClient()
+    # Custom CSS for glass-morphism and modern look
+    custom_css = """
+    body {
+        background: #0b0f19;
+    }
+    .gradio-container {
+        background: #0b0f19 !important;
+    }
+    /* Glassmorphism for the main panels */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.04) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+    }
+    /* The Orange Action Button */
+    #process-btn {
+        background: linear-gradient(90deg, #ff6b3d, #ff9e75) !important;
+        border: none;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(255, 107, 61, 0.4);
+        transition: 0.3s;
+    }
+    #process-btn:hover {
+        box-shadow: 0 6px 20px rgba(255, 107, 61, 0.6);
+        transform: translateY(-2px);
+    }
+    /* Text coloring */
+    label { color: #ccc !important; }
+    span { color: #ccc !important; }
+    .prose { color: #ddd !important; }
+    /* Input fields background */
+    textarea, input {
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    /* Example buttons styling */
+    .example-btn {
+        background: rgba(255, 107, 61, 0.1) !important;
+        border: 1px solid rgba(255, 107, 61, 0.3) !important;
+        color: #ff9e75 !important;
+    }
+    .example-btn:hover {
+        background: rgba(255, 107, 61, 0.2) !important;
+    }
+    """
 
-    with gr.Blocks(title="LM Studio CSV Processor") as demo:
-        gr.Markdown("# 🤖 LM Studio CSV Processor")
-        gr.Markdown(
-            "Upload a CSV file and process each row through your local LM Studio model. "
-            "The output will include the primary key for easy cross-matching."
-        )
+    with gr.Blocks(theme=gr.themes.Soft(), css=custom_css, title="LM Studio CSV Processor") as demo:
+
+        # Header
+        with gr.Row():
+            gr.Markdown("## 🤖 LM Studio CSV Processor\nUpload a CSV file and process each row through your local LM Studio model.")
 
         with gr.Row():
-            with gr.Column():
-                # Input components
+
+            # LEFT COLUMN (Inputs)
+            with gr.Column(scale=2, elem_classes="glass-panel"):
+
+                # File Upload
                 file_input = gr.File(
                     label="Upload CSV File",
                     file_types=[".csv"],
-                    type="filepath"
+                    type="filepath",
+                    height=100
                 )
 
+                # Prompt Template
                 prompt_input = gr.Textbox(
                     label="Prompt Template",
-                    placeholder="Enter your prompt here. Use {row_data} to insert the row data.",
-                    value="Please provide a concise summary of the following data:\n\n{row_data}",
-                    lines=5
+                    placeholder="Enter your prompt here. Use {row_data} to insert data...",
+                    lines=5,
+                    value="Please provide a concise summary of the following data:\n\n{row_data}"
                 )
 
+                # Model & Temperature
                 model_input = gr.Textbox(
                     label="Model Name (optional)",
-                    placeholder="Leave empty to use the loaded model",
-                    value=""
+                    placeholder="Leave empty to use loaded model"
                 )
 
                 temperature_input = gr.Slider(
-                    label="Temperature",
                     minimum=0.0,
                     maximum=2.0,
                     value=0.7,
-                    step=0.1
+                    step=0.1,
+                    label="Temperature"
                 )
 
-                process_btn = gr.Button("Process CSV", variant="primary")
+                # The Big Orange Button
+                process_btn = gr.Button("Process CSV", elem_id="process-btn", size="lg")
 
-            with gr.Column():
-                # Output components
-                status_output = gr.Textbox(
-                    label="Status",
-                    lines=10,
-                    interactive=False
+                # Tips Section
+                gr.Markdown("### 💡 Tips")
+                gr.Markdown(
+                    """
+                    * The app automatically detects the ID column.
+                    * Use `{row_data}` in your prompt to insert the CSV row.
+                    * Ensure LM Studio server is running at `http://localhost:1234`.
+                    """
                 )
 
-                file_output = gr.File(
-                    label="Download Processed CSV"
-                )
+                # Example Prompts (Clickable buttons)
+                gr.Markdown("### 📝 Example Prompts")
+                with gr.Row():
+                    ex_btn1 = gr.Button("Summarize", size="sm", elem_classes="example-btn")
+                    ex_btn2 = gr.Button("Analyze Sentiment", size="sm", elem_classes="example-btn")
+                    ex_btn3 = gr.Button("Extract Key Info", size="sm", elem_classes="example-btn")
 
-        # Add examples
-        gr.Markdown("### 💡 Tips")
-        gr.Markdown(
-            "- The app will automatically detect the primary key (ID column)\n"
-            "- Use `{row_data}` in your prompt template to insert row data\n"
-            "- Adjust temperature for more creative (higher) or focused (lower) responses\n"
-            "- Make sure LM Studio server is running at http://localhost:1234"
-        )
+            # RIGHT COLUMN (Outputs)
+            with gr.Column(scale=2):
 
-        # Example prompts
-        gr.Examples(
-            examples=[
-                ["Summarize this data in one sentence:\n\n{row_data}"],
-                ["Analyze the following record and provide key insights:\n\n{row_data}"],
-                ["Extract the most important information from:\n\n{row_data}"],
-            ],
-            inputs=prompt_input,
-            label="Example Prompts"
-        )
+                # Status Box
+                with gr.Group(elem_classes="glass-panel"):
+                    gr.Markdown("### Status")
+                    status_output = gr.Textbox(
+                        label="",
+                        placeholder="Waiting for process to start...",
+                        lines=10,
+                        interactive=False,
+                        show_copy_button=True
+                    )
 
-        # Connect the processing function
+                # Spacer
+                gr.Markdown("<br>")
+
+                # Download Box
+                with gr.Group(elem_classes="glass-panel"):
+                    gr.Markdown("### 📄 Download Processed CSV")
+                    file_output = gr.File(label="Output", interactive=False)
+
+        # Event Wiring - Main Process Button
         process_btn.click(
             fn=process_csv,
             inputs=[file_input, prompt_input, model_input, temperature_input],
             outputs=[file_output, status_output]
+        )
+
+        # Example Prompt Buttons
+        ex_btn1.click(
+            lambda: "Summarize this data in one sentence:\n\n{row_data}",
+            None,
+            prompt_input
+        )
+        ex_btn2.click(
+            lambda: "Analyze the sentiment of the following data:\n\n{row_data}",
+            None,
+            prompt_input
+        )
+        ex_btn3.click(
+            lambda: "Extract the most important information from:\n\n{row_data}",
+            None,
+            prompt_input
         )
 
     return demo
