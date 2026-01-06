@@ -9,6 +9,8 @@ import requests
 import json
 from typing import Optional, Tuple
 import io
+import tempfile
+import os
 
 
 class LMStudioClient:
@@ -147,8 +149,9 @@ def process_csv(
             'Summary': summaries
         })
 
-        # Save to CSV
-        output_path = "/tmp/processed_output.csv"
+        # Save to CSV in system temp directory (cross-platform compatible)
+        temp_dir = tempfile.gettempdir()
+        output_path = os.path.join(temp_dir, "processed_output.csv")
         output_df.to_csv(output_path, index=False)
 
         status_msg += f"✓ Successfully processed {len(df)} rows!\n"
