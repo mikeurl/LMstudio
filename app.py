@@ -86,10 +86,27 @@ def detect_primary_key(df: pd.DataFrame) -> str:
 def sanitize_for_csv(text: str) -> str:
     """
     Sanitize text to ensure it fits in a single CSV cell
-    Replaces newlines and carriage returns with spaces
+    Replaces newlines, special characters, and fixes encoding issues
     """
     if not isinstance(text, str):
         return str(text)
+
+    # Replace common Unicode characters that cause encoding issues
+    replacements = {
+        '\u2014': '-',      # em dash
+        '\u2013': '-',      # en dash
+        '\u2018': "'",      # left single quote
+        '\u2019': "'",      # right single quote
+        '\u201c': '"',      # left double quote
+        '\u201d': '"',      # right double quote
+        '\u2026': '...',    # ellipsis
+        '\u2022': '*',      # bullet
+        '\u00a0': ' ',      # non-breaking space
+        '\u00ad': '-',      # soft hyphen
+    }
+
+    for old_char, new_char in replacements.items():
+        text = text.replace(old_char, new_char)
 
     # Replace newlines, carriage returns, and tabs with spaces
     cleaned = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
@@ -172,7 +189,8 @@ def process_csv(
         # Save to CSV in system temp directory (cross-platform compatible)
         temp_dir = tempfile.gettempdir()
         output_path = os.path.join(temp_dir, "processed_output.csv")
-        output_df.to_csv(output_path, index=False)
+        # Use utf-8-sig encoding (UTF-8 with BOM) for proper Windows/Excel compatibility
+        output_df.to_csv(output_path, index=False, encoding='utf-8-sig')
 
         status_msg += f"✓ Successfully processed {len(df)} rows!\n"
         status_msg += f"✓ Output saved with primary key '{pk_column}' for cross-matching."
