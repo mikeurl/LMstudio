@@ -1,0 +1,6 @@
+customer_id,name,product,feedback,rating
+1001,John Smith,Laptop,"Great product, fast delivery",5
+1002,Sarah Johnson,Mouse,"Good quality but a bit expensive",4
+1003,Mike Chen,Keyboard,"Keys are too loud, not happy with purchase",2
+1004,Emily Davis,Monitor,"Perfect for work, highly recommend",5
+1005,David Wilson,Webcam,"Decent camera but software is buggy",3
